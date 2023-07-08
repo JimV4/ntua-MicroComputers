@@ -1,0 +1,154 @@
+START:
+	IN 10H
+	LXI H,0A00H
+	MVI M,10H	;store blank 4 times
+	INX H
+	MVI M,10H
+	INX H
+	MVI M,10H
+	INX H
+	MVI M,10H
+	INX H
+
+LINE_0:
+	MVI A,FEH	;A = 11111110, 1st line of keys
+	STA 2800H	
+	LDA 1800H	;read which key is pushed
+	ANI 07H	;only 3 lsbs are important to identify which key is pushed
+	CPI 06H	;check if A = 00000110, so check for INSTR STEP key
+	MVI B,86H	;hex code of key. We use B to save the hex code of pushed key
+	JZ OUTPUT
+	CPI 05H	;check if A = 00000101, so check for FETCH PC key
+	MVI B,85H	;hex code of key
+	JZ OUTPUT
+			;we ignore the HDWR STEP
+
+LINE_1:
+	MVI A,FDH	;A = 11111101, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for RUN key
+	MVI B,84H
+	JZ OUTPUT
+	CPI 05H	;check for FETCH REG key
+	MVI B,80H
+	JZ OUTPUT	
+	CPI 03H	;check for FETCH ADDRS key
+	MVI B,82H
+	JZ OUTPUT
+
+LINE_2:
+	MVI A,FBH	;A = 11111011, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for 0 key
+	MVI B,00H
+	JZ OUTPUT
+	CPI 05H	;check for STORE/INCR key
+	MVI B,83H
+	JZ OUTPUT	
+	CPI 03H	;check for DECR key
+	MVI B,81H
+	JZ OUTPUT
+
+LINE_3:
+	MVI A,F7H	;A = 11110111, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for 1 key
+	MVI B,01H
+	JZ OUTPUT
+	CPI 05H	;check for 2 key
+	MVI B,02H
+	JZ OUTPUT	
+	CPI 03H	;check for 3 key
+	MVI B,03H
+	JZ OUTPUT
+
+LINE_4:
+	MVI A,EFH	;A = 11101111, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for 4 key
+	MVI B,04H
+	JZ OUTPUT
+	CPI 05H	;check for 5 key
+	MVI B,05H
+	JZ OUTPUT	
+	CPI 03H	;check for 6 key
+	MVI B,06H
+	JZ OUTPUT
+
+LINE_5:
+	MVI A,DFH	;A = 11011111, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for 7 key
+	MVI B,07H
+	JZ OUTPUT
+	CPI 05H	;check for 8 key
+	MVI B,08H
+	JZ OUTPUT	
+	CPI 03H	;check for 9 key
+	MVI B,09H
+	JZ OUTPUT
+
+LINE_6:
+	MVI A,BFH	;A = 10111111, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for A key
+	MVI B,0AH
+	JZ OUTPUT
+	CPI 05H	;check for B key
+	MVI B,0BH
+	JZ OUTPUT	
+	CPI 03H	;check for C key
+	MVI B,0CH
+	JZ OUTPUT
+
+LINE_7:
+	MVI A,7FH	;A = 01111111, 2nd line of keys
+	STA 2800H
+	LDA 1800H
+	ANI 07H
+	CPI 06H	;check for D key
+	MVI B,0DH
+	JZ OUTPUT
+	CPI 05H	;check for E key
+	MVI B,0EH
+	JZ OUTPUT	
+	CPI 03H	;check for F key
+	MVI B,0FH
+	JZ OUTPUT
+
+JMP START 		;if no key pushed repeat
+
+OUTPUT:
+	;LXI H,0A00H	;get memory position where the message(hex code) will be stored
+
+
+	MOV A,B	;pass hex code to A
+	ANI 0FH	;get 4 lsbs
+	MOV M,A	;store them in address 0A04H
+	INX H		;next mem position
+	MOV A,B
+	ANI F0H	;get 4 msbs
+	RLC
+	RLC
+	RLC
+	RLC
+	MOV M,A	;store them in address 0A05H
+	LXI D,0A00H	;pass to DE the address of output message
+
+	CALL STDM	;show output
+	CALL DCD
+	JMP START
+
+END 

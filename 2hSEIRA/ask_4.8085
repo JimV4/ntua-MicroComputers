@@ -1,0 +1,79 @@
+START:
+	LDA 2000H	;take input from switches
+
+A0_B0:
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	MOV C,A 	;save lsb to C
+	MOV A,B	;restore A
+	RRC		;get next lsb
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	ORA C		;or between A0, B0
+	MOV D,A	;save result of OR to D
+	MOV A,B 	;restore A
+
+A1_B1:
+	RRC		;get next lsb
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	MOV C,A 	;save lsb to C
+	MOV A,B	;restore A
+	RRC		;get next lsb
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	ORA C		;or between A1, B1
+	MOV E,A	;save result of OR to E
+	
+AND:
+	ANA D		;AND between 4 lsbs
+	MOV D,A	;save result of AND to D
+	MOV A,E
+	RLC
+	ADD D
+	MOV H,A	;save first two lsbs of result
+	MOV A,B	;restore A to continue with rest bits
+
+A2_B2:
+	RRC
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	MOV C,A 	;save lsb to C
+	MOV A,B	;restore A
+	RRC		;get next lsb
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	ANA C		;AND between A2, B2
+	MOV D,A	;save result of AND to D
+	MOV A,B 	;restore A
+
+A3_B3:
+	RRC		;get next lsb
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	MOV C,A 	;save lsb to C
+	MOV A,B	;restore A
+	RRC		;get next lsb
+	MOV B,A	;save input
+	ANI 01H	;check lsb
+	ANA C		;AND between A3, B3
+	MOV E,A	;save result of AND to E
+
+XOR:
+	XRA D		;XOR between 4 msbs
+	RLC
+	RLC
+	RLC
+	MOV L,A	;save result of XOR to L
+	MOV A,D
+	RLC
+	RLC
+	ADD L
+	ADD H
+
+END:
+	CMA
+	STA 3000H
+	JMP START
+	END
+	

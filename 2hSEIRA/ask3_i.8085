@@ -1,0 +1,35 @@
+IN 10H
+START:
+	MVI D,00H	;D is counts the position of msb startint from the end
+	MVI E,01H
+	LDA 2000H	;load input
+
+FIND_ON:
+	CPI 00H	
+	JZ DONE	;if input is zero finish
+	RLC		;else rotate left to get msb
+	INR D		;increase rotation counter
+	MOV B,A       ;save A
+	ANI 01H	;check if msb is 1
+	CPI 00H
+	MOV A,B
+	JZ FIND_ON   	;if msb is 0 then loop again
+	MVI A,80H	;else A contains 10000000 
+
+POS_FOUND:		;we have found the most left 1, in position D
+	RRC		
+	ADI 80H	;each time rrc A and add 10000000 to get 1 until msb an 0 after it
+	INR E		;increase index, to compare with D
+	MOV B,A	;save A
+	MOV A,E
+	CMP D	
+	MOV A,B	
+	JZ DONE	;if position of msb is reached, stop putting 1 and finish
+	JMP POS_FOUND ; else loop again
+
+DONE:
+	CMA
+	STA 3000H
+	JMP START
+	
+END

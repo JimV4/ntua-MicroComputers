@@ -1,0 +1,53 @@
+IN 10H
+LXI B,02F4H	; Delay
+MVI A,FEH 		; LED starting position = 11111110
+MVI D,00H		;
+MOV E,A   		; save iinitial led output 11111110
+STA 3000H  	; show initial  led output 11111110
+
+LOOP_FOR_INPUT:
+	CALL DELB
+	LDA 2000H		; take input
+	CPI 02H		; A = 10 => halt
+	JZ LOOP_FOR_INPUT
+	CPI 03H		; A = 11 => halt
+	JZ LOOP_FOR_INPUT
+	CPI 00H		; A = 00 => cycle left
+	JZ CYCLE_LEFT
+	JMP OSCILLATE	; Else => oscillate
+
+CYCLE_LEFT:
+	MVI D,00H		; Next oscillation will go left
+	MOV A,E		; Retrieve LED's current position
+	RLC			; Cycle left output
+	MOV E,A   		; save current LED output
+	STA 3000H		; Show output
+	JMP LOOP_FOR_INPUT
+
+CYCLE_RIGHT:
+	MVI D,01H
+	MOV A,E		; Retrieve LED's current position
+	RRC			; Cycle right output
+	MOV E,A   		; save current LED output
+	STA 3000H		; Show output
+	JMP LOOP_FOR_INPUT
+
+OSCILLATE:
+	MOV A,E		; Retrieve output
+	CPI 7FH		; A = 01111111 => change direction
+	JZ CHANGE_DIRECTION
+	CPI FEH		; A = 11111110 => change direction
+	JZ CYCLE_LEFT ;CHANGE_DIRECTION	
+	OPPOSITE_DIRECTION:
+		MOV A,D
+		CPI 00H
+		JZ CYCLE_LEFT
+		JMP CYCLE_RIGHT
+
+CHANGE_DIRECTION:
+	MOV A,D
+	XRI 01H		; 00 XOR 01 = 01, 01 XOR 01 = 00
+	MOV D,A
+	JMP OPPOSITE_DIRECTION
+
+END

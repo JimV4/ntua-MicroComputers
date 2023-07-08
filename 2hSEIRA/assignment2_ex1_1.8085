@@ -1,0 +1,76 @@
+;(a)
+IN 10H
+MVI A,FFH	; A contains input starting from 255
+LXI H,0900H	; (HL) contains memory position
+
+WHILE: 	
+	CPI 00H		; Check if number is smaller than 0
+	JZ DONE
+	MOV M,A		; Store A to memory posistion
+	INX H			; Get next position
+	DCR A			; Get next number
+	JMP WHILE
+
+DONE:
+
+	MOV M,A		; Store A to memory posistion
+	INX H			; Get next position
+	DCR A			; Get next number
+
+;END
+
+
+;(b)
+LXI D,0000H			;DE counts total number of zeros
+LXI H,09FFH
+INPUT:
+	MVI B,09H		;B is used as a help counter when we rotate(see later)
+	MOV A,M		;A containts the number which we counnt zeros
+
+ZEROS_FOR_NUMBER:		;count zeros for each number
+	DCR B			;decrease counter(we must make 8 rrcs)
+	JZ NEXT_NUMBER	;if 8 rrcs are made take next number
+	RRC			;rrc to extract lsb of 8-bit number
+	JC ZEROS_FOR_NUMBER	;if lsb is 1 then loop
+	INX D			;else increase counter
+
+	JMP ZEROS_FOR_NUMBER	;if 8 rrcs are not reached loop 
+
+
+NEXT_NUMBER:			;take next number
+	DCR L			;take next memory position
+	JNZ INPUT		;if low of memory position is zero then finish
+				;else take next number and repeat
+
+;END
+
+;(c)
+MVI C,00H	;initialiaze C which contains the result
+LXI H,09FFH	;goto last memory position
+
+INPUT3:
+	MOV A,M	;A contains the input number from memory position
+	CPI 20H	
+	JC GET_NEXT	;if number < 20H don't count it so get next number
+	CPI 70H	;else if number >= 20H compare with 70H
+	JC COUNT	;if 20H <= number < 70 count the number
+	CPI 70H	;else check if number is 70H
+	JZ COUNT	;if number is 70H count else get next number
+
+GET_NEXT:
+	DCR L		;take next memory position
+	JZ DONE3	;if low of memory position is zero then finish
+	JMP INPUT3	;else take next number and repeat
+
+COUNT:
+	INR C
+	JMP GET_NEXT
+
+DONE3:
+	MOV A,C	;show output on leds
+	CMA
+	STA 3000H
+	END
+
+
+

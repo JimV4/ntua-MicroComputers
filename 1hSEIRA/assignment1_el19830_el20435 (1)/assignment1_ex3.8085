@@ -1,0 +1,37 @@
+IN 10H
+LXI B,01F4H		; delay for "blinking"
+
+START:
+	LDA 2000H
+	MVI E,FFH		; E = -1 (2's complement)
+	CPI 63H		; check if number > 99
+	JC DECA		; if not, goto deca
+	CPI C7H 		; if number > 99 test if number > 199
+	JNC GR_199
+	SUI 64H		; if 99 < number < 200 remove 100
+
+DECA:
+	INR E
+	SUI 0AH  		; remove 10 from input
+	JNC DECA  		; if input > 0 continue subbing
+	ADI 0AH   		; else restore negative remainder
+	MOV D,A   		; save units
+	MOV A,E    	; restore ten's
+	RRC
+	RRC
+	RRC
+	RRC			; bring ten's to first 4 msbs with 4 rrc
+	ADD D			; 4 msbs contain ten's, 4 lsbs contain units
+	CMA
+	STA 3000H
+	JMP START
+
+GR_199:
+	MVI A,F0H		; A = 11110000
+	STA 3000H		; show A
+	CALL DELB		; wait
+	MVI A,FFH		; A = 11111111 (for "blinking")
+	STA 3000H		; show A
+	CALL DELB 		; wait
+	JMP START
+END

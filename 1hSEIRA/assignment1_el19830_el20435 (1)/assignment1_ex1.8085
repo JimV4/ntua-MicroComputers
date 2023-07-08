@@ -1,0 +1,28 @@
+START:
+	MVI B,01H	; B = 1
+	LDA 2000H	; A = M(2000H)
+	CPI 00H	; If (A == 0) then Z = 1 else Z = 0
+	JZ LABEL1	; If (Z == 1) then goto LABEL1
+
+LABEL3:	
+	RAR		; Rotate A Right (with CY)
+	JC LABEL2	; If (CY == 1) then goto LABEL2
+	INR B		; B = B + 1
+	JNZ LABEL3	; If (Z != 1) then goto LABEL3 (at this point always true)
+
+LABEL2:
+	MOV A,B	; A = B
+
+LABEL1:
+	CMA		; A = A'
+	STA 3000H	; M(3000H) = A
+	JMP START	; Run forever
+	RST 1		; Terminate program
+
+END			; End of program
+
+; Explanation:
+; Return least significant 1's position
+; e.g. xxxx1000 -> 100
+; e.g. 10000000 -> 1000
+; e.g. xxxxxxx1 -> 1

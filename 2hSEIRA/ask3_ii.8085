@@ -1,0 +1,49 @@
+IN 10H
+LXI B,0320H		;delay for "blinking"
+
+INPUT:
+	MVI A,FFH	
+	STA 3000H	;led output initialized to 11111111(off)
+	MVI C,00H	;C is used as counter
+	CALL KIND	;take hex code of key pushed
+	CPI 01H	;check if key >= 1
+	JNC GREATER_THAN_1
+	JMP INPUT	;if key < 1 repeat
+
+GREATER_THAN_1:
+	CPI 05H		;if key >= 1 check if key >= 5
+	JC BETWEEN_1_4 	;if key < 5 then 1 <= key <= 4
+	JMP GREATER_THAN_4	;else key >= 5
+
+BETWEEN_1_4:
+	MVI A,F0H	;A contains 11110000
+	STA 3000H
+	CALL DELB
+	MVI A,FFH	;A contains 11111111 so we blink with 4 lsbs
+	STA 3000H
+	CALL DELB
+	INR C		;increase blink counter
+	MOV A,C
+	CPI 04H	;check if we have blinked 4 times
+	JZ INPUT
+	JMP BETWEEN_1_4
+
+GREATER_THAN_4:
+	CPI 09H	;if key >=4 check if key < 9
+	JC BETWEEN_5_8
+	JMP INPUT	;if key >= 9, not valid so take input again
+
+BETWEEN_5_8:
+	MVI A,0FH	;A contains 00001111
+	STA 3000H
+	CALL DELB
+	MVI A,FFH	;A contains 11111111 so we blink with 4 msbs
+	STA 3000H
+	CALL DELB
+	INR C		;increase blink counter
+	MOV A,C
+	CPI 04H	;check if we have blinked 4 time
+	JZ INPUT
+	JMP BETWEEN_5_8
+
+END

@@ -1,0 +1,70 @@
+MVI A,00H 		; initialize 7 segment display. 4 left bits are zero 
+STA 0B02H		
+STA 0B03H
+STA 0B04H
+STA 0B05H
+
+MVI A,0DH		; initialize RST6.5 interrupts
+SIM	
+EI			; enable interrupts
+
+WAIT_FOR_INTERRUPT: 
+	JMP WAIT_FOR_INTERRUPT	; wait for interrupt
+
+INTR_ROUTINE:			; if interrupt happened start blinking
+	PUSH PSW		; save registers that are used by
+	PUSH B			; the main interrput
+	PUSH D
+	LXI B,00FAH		; delay 0.25 sec for DELB
+	EI			; enable interrupts
+	MVI D,2DH		; initialize timer to 45
+
+BLINKING:
+	MVI B,00H		; initialize B to store dekades
+	MOV A,D		; save timer
+
+	DECA:			; convert binary timer to decimal
+	CPI 0AH
+	JC OUTPUT
+	SUI 0AH
+	INR B
+	JMP DECA
+
+	OUTPUT:
+	STA 0B00H 	; show monades to 2nd 7 segment display
+	MOV A,B
+	STA 0B01H 	; show dekades to 1st 7-segment display	
+
+	PUSH D		; save D
+	LXI D,0B00H 	; load address for DCD to find output data
+	CALL STDM
+	CALL DCD	; show timer output
+	LXI B,00FAH 	; 0.25s delay for DELB
+	MVI A,00H	; start blinking. Blink 4 times, so 1 second will pass
+	STA 3000H	
+	CALL DCD
+	CALL DELB
+	MVI A,FFH
+	STA 3000H
+	CALL DCD
+	CALL DELB
+	MVI A,00H
+	STA 3000H		
+	CALL DCD
+	CALL DELB
+	MVI A,FFH
+	STA 3000H
+	CALL DCD
+	CALL DELB	; blink led output with T = 0.5 sec. After 4 blinks a second has passed
+	POP D		; restore D
+	DCR D		; get next number(44, 43, ...)
+	JZ EXIT	; if 0 is reached exit from interrupt
+	JMP BLINKING	; else continue with next number of timer
+
+EXIT:
+	POP D		; restore pushed registers and return 
+	POP B		; to the main program
+	POP PSW
+	JMP WAIT_FOR_INTERRUPT
+	RET
+END	

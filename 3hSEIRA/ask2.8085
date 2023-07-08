@@ -1,0 +1,81 @@
+MVI A,00H 		; initialize 7 segment display
+STA 0B00H		; two most left segments are zero and 
+STA 0B01H	
+STA 0B04H		; two most right segments are zero	
+STA 0B05H
+
+MVI C,2AH		; C = 42
+MVI D,8EH		; D = 142
+MVI E,F2H		; E = 242
+
+MVI A,0DH		; initialize RST6.5 interrupts
+SIM	
+EI			; enable interrupts
+
+WAIT_FOR_INTERRUPT:
+	JMP WAIT_FOR_INTERRUPT	; wait for interrupt
+
+INTR_ROUTINE:
+	PUSH PSW		; save registers that are used by
+	PUSH B			; the interrupt
+	PUSH D
+	CALL KIND		; read first number from keyboard
+	STA 0B03H		; show first to 3rd segment
+	MOV B,A 		; save first number
+	CALL KIND		; read second number from keyboard
+	MOV E,A		; save second number
+	STA 0B02H		; show second to 2nd segment
+	MOV A,B		; restore first number
+	RLC			; 4 RLC's to rotate first number
+	RLC			; to 4 msbs.
+	RLC
+	RLC
+	ORA E			; get full number
+	MOV B,A		; save full number
+	
+	LXI D,0B00H 		; load address for DCD to find output data
+	CALL STDM
+	CALL DCD		; show number output
+
+	MOV A,B		; restore full number
+	POP D			; restore B-C and D-E for the rest program
+	POP B
+LED_OUTPUT:
+	CMP C			; if 0 < number <= C
+	JC LESS_THAN_C
+	JZ LESS_THAN_C
+	
+	CMP D			; if C < number <= D
+	JC LESS_THAN_D
+	JZ LESS_THAN_D
+	
+	CMP E			; if D < number <= E
+	JC LESS_THAN_E
+	JZ LESS_THAN_E
+
+	LESS_THAN_FF:		; if E < number <= FF
+	MVI A,08H
+	CMA
+	JMP EXIT
+
+LESS_THAN_C:
+	MVI A,01H
+	CMA
+	JMP EXIT	
+
+LESS_THAN_D:
+	MVI A,02H
+	CMA
+	JMP EXIT
+
+LESS_THAN_E:
+	MVI A,04H
+	CMA
+	JMP EXIT
+
+EXIT:
+	STA 3000H		; show led output
+	POP PSW
+	EI			; enable interrupts again
+	RET
+END

@@ -1,0 +1,54 @@
+LXI B,01F4H
+MVI D,00H		;D helps as a timer(see later)
+
+START:
+	LDA 2000H
+	ANI 01H	
+	CPI 00H	;check if lsb off
+	JZ LSB_0  	; if lsb 0 goto LSB_0
+	JMP START	; else loop
+
+LSB_0:
+	LDA 2000H
+	ANI 01H
+	CPI 00H   	;check if lsb on
+	JNZ LSB_1   ; if lsb 1 goto LSB_1
+	JMP LSB_0   ;else loop
+
+LSB_1:
+	LDA 2000H
+	ANI 01H	
+	CPI 00H	 ;check if lsb off
+	JZ BLINK  	; if lsb 0 goto LSB_0
+	JMP LSB_1	; else loop
+
+BLINK:
+	MVI A,00H
+	STA 3000H
+	CALL DELB
+	INR D		; each blink means than 0.5 sec has passed
+	MVI A,FFH
+	STA 3000H
+	CALL DELB
+	INR D
+	MOV A,D
+	CPI 1EH	;if D=30*0.5 = 15 it means that 15 sec have passed so stop
+	JZ DONE
+	LDA 2000H
+	ANI 01H	
+	CPI 00H	 	;check if lsb on
+	JZ BLINK		;if lsb off goto blink
+	JMP REFRESH		;else, lsb on so refresh timer
+
+REFRESH:
+	MVI D,00H 		;set timer to 0 and blink again
+	JMP BLINK
+
+DONE:
+	MVI A,00H		;turn off lights
+	CMA
+	STA 3000H
+	MVI D,00H		;reset timer
+	JMP START		;wait for switch
+
+END

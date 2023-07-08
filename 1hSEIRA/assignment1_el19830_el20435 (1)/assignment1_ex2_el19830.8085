@@ -1,0 +1,50 @@
+IN 10H
+LXI B,01F4H	;delay
+MVI A,FEH 		;LED starting position = 11111110
+MOV E,A   		;save iinitial led output 11111110
+STA 3000H  	;show initial  led output 11111110
+
+INPUT:
+	CALL DELB
+	LDA 2000H  	;take input
+	ANI 03H    	;check if lsb and 2nd lsb are on
+	CPI 01H
+	JZ LSB_ON_L 	;if 01 goto LSB_ON_L
+	CPI 00H
+	JZ LSB_OFF		;else if 00 goto LSB_OFF
+	JMP INPUT		;in any other case, 2nd lsb is on so stop
+	
+LSB_ON_L:
+	MOV A,E		;restore led output
+	CPI 7FH		;check if output is 01111111
+	JZ LSB_ON_R	;if so move right
+	RLC			;else rlc
+	MOV E,A		;save led output
+	STA 3000H
+	JMP INPUT
+
+LSB_ON_R:
+	MOV A,E		;restore led output
+	CPI FEH		;check if output is 11111110
+	JZ LSB_ON_L	;if so move left
+	RRC			;else rrc
+	MOV E,A		;save led output
+	STA 3000H
+	INPUT_HELP:
+		CALL DELB
+		LDA 2000H  		;take input
+		ANI 03H    		;check if lsb and 2nd lsb are on
+		CPI 01H
+		JZ LSB_ON_R 		;if 01 move right
+		CPI 00H
+		JZ LSB_OFF	  		;else if 00 goto LSB_OFF
+		JMP INPUT_HELP  		;in any other case, 2nd lsb is on so 							;stop
+
+LSB_OFF:
+	MOV A,E 	;restore led output
+	RLC     	;rotate left
+	MOV E,A  	;save new value of led output after rlc
+	STA 3000H
+	JMP INPUT
+	
+END
